@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling>=1.10.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "MuTe_RL"
+version = "0.0.1"
+readme = "README.md"
+description = "Deep learning models and environments made by Telha and Mudassar"
+authors = [{author = "Telha Bin Bilal", email = "telhabb@gmail.com"}, {author = "Mudassar Iqbal", email = "mdsriqb@gmail.com"}]
+keywords = ["reinforcement-learning", "deep-learning"]
+
+[tool.poetry.dependencies]
+pytest = "^7.0.0"
+
+[tool.pytest.ini_options]
+addopts = "-v "
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.isort]
+profile = "black"
