@@ -12,9 +12,10 @@ class Color:
         # return f'"int: {self.int} str: {self.str}"'
         return self.str
 
-    def with_content(self, content):
-        self.str = self.str.replace("■", str(content))
-        return self
+    def with_content(self, content, width=0):
+        new_object = Color(self.int, self.str.replace("■", f"{content:^{width}}"))
+        return new_object
+
 
 class Colors(enum.Enum):
     """enumerates all the colors on rubik's cubes"""
@@ -33,17 +34,17 @@ class Colors(enum.Enum):
 
 
 class BackgroundColors(enum.Enum):
-    """defines strings wrapping a box in ANSI escape sequence giving the effect of background colors"""
+    """defines Color object that add background color to text using ANSI escape sequence"""
 
-    # :TODO: define Color(...) objects instead
-    # :TODO: create initial data such that tiles are colored indexes in face
+    RED = Color(0, "\033[41m" + "■" + "\033[0m")
+    ORANGE = Color(1, "\033[48;5;208m" + "■" + "\033[0m")
 
-    BLACK = "\033[40m" + "■" + "\033[0m"
-    RED = "\033[41m" + "■" + "\033[0m"
-    GREEN = "\033[42m" + "■" + "\033[0m"
-    YELLOW = "\033[43m" + "■" + "\033[0m"
-    BLUE = "\033[44m" + "■" + "\033[0m"
-    PURPLE = "\033[45m" + "■" + "\033[0m"
-    CYAN = "\033[46m" + "■" + "\033[0m"
+    BLUE = Color(2, "\033[44m" + "■" + "\033[0m")
+    GREEN = Color(3, "\033[42m" + "■" + "\033[0m")
 
-    # BackgroundColors.GREEN.value.replace("■", f"{d:^{len(str(n))}}")
+    WHITE = Color(4, "\033[48;5;15m" + "■" + "\033[0m")
+    YELLOW = Color(5, "\033[43m" + "■" + "\033[0m")
+
+    BLACK = Color(6, "\033[40m" + "■" + "\033[0m")
+    PURPLE = Color(7, "\033[45m" + "■" + "\033[0m")
+    CYAN = Color(8, "\033[46m" + "■" + "\033[0m")
