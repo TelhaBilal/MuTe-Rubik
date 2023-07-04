@@ -1,20 +1,22 @@
 import enum
 
 
-class Color:
-    """binds together display color string and integer encoding of the color"""
+# TODO: post formatting: delete
 
-    def __init__(self, integer: int, string: str) -> None:
-        self.int = integer
-        self.str = string
+# class Color:
+#     """binds together display color string and integer encoding of the color"""
 
-    def __repr__(self) -> str:
-        # return f'"int: {self.int} str: {self.str}"'
-        return self.str
+#     def __init__(self, integer: int, string: str) -> None:
+#         self.int = integer
+#         self.str = string
 
-    def with_content(self, content, width=0):
-        new_object = Color(self.int, self.str.replace("■", f"{content:^{width}}"))
-        return new_object
+#     def __repr__(self) -> str:
+#         # return f'"int: {self.int} str: {self.str}"'
+#         return self.str
+
+#     def with_content(self, content, width=0):
+#         new_object = Color(self.int, self.str.replace("■", f"{content:^{width}}"))
+#         return new_object
 
 
 class Colors(enum.Enum):
