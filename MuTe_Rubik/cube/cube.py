@@ -26,10 +26,7 @@ class Cube(RubikPuzzle):
 
         self.disabled_layers = disabled_layers
 
-        # self.data = data if data else self._solved_state(sides_length, numbered=numbered)
-        self.solved_backup = self.__get_solved_state(sides_length)
-        init_data = data if data else deepcopy(self.solved_backup)
-
+        init_data = data if data else self.__get_solved_state(sides_length)
         self.__init_from_data(init_data)
 
         self.moves_stack: List[str] = []
@@ -40,13 +37,15 @@ class Cube(RubikPuzzle):
 
     def __init_from_data(self, init_data):
 
-        self.data = init_data
-
-        sides_length = sqrt(len(self.data[0]))
+        sides_length = sqrt(len(init_data[0]))
         assert sides_length == int(sides_length), "provide a cube with square faces"
 
         self.n = int(sides_length)
+
+        self.data = init_data
         self.layers: Dict[str, CubeLayer] = get_cube_layers_from_data(self.data, self.n)
+
+        self.solved_backup = self.__get_solved_state(self.n)
 
     def get_all_possible_moves(self):
         return [item for key in self.layers.keys() for item in [key, key + "'"]]
@@ -161,7 +160,7 @@ class Cube(RubikPuzzle):
     def get_solved_cube(cls, n_sides):
 
         data = cls.__get_solved_state(n_sides)
-        return Cube(data)
+        return Cube(data=data)
 
     @staticmethod
     def __get_solved_state(n_sides):
