@@ -6,7 +6,7 @@ import numpy as np
 
 from MuTe_Rubik.cube.utils import rotate_matrix_clockwise, rotate_matrix_anticlockwise
 from MuTe_Rubik.utils import get_ansi_colored_text
-from MuTe_Rubik.base.rubik import ColorOptions
+from MuTe_Rubik.base.rubik import GameColor
 
 
 class CubeFaceIndexes(enum.Enum):
@@ -22,18 +22,46 @@ class CubeFaceIndexes(enum.Enum):
 
 class CubeCell:
 
-    def __init__(self, color: ColorOptions, cell_id: int | None = None, display_ids=True):
+    def __init__(self, color: GameColor, cell_id: int | None = None, display_ids=True):
 
         self.color = color
         self.cell_id = cell_id
-        self.__fg_color = [255-c for c in color]  # loop over rgb values
+        self.__fg_color_rgb = [255-c for c in color.rgb]  # loop over rgb values
 
         self.display_ids = display_ids
 
     def __repr__(self):
 
         return get_ansi_colored_text(self.cell_id if self.display_ids and self.cell_id else " ",
-                                     self.color, self.__fg_color)
+                                     self.__fg_color_rgb,
+                                     self.color.rgb)
+
+    def get_padded_str(self,
+                       total_width: int | None = None,
+                       len_l_pad: int = 0,
+                       len_r_pad: int = 0,
+                       padding_char: str = ' '):
+
+        printed_char = str(self.cell_id) if self.display_ids and self.cell_id else " "
+
+        if total_width is not None:
+            assert total_width >= 0, "total width cannot be negative"
+
+            len_diff = total_width-len(printed_char)
+
+            if len_diff >= 0:
+                if len_diff % 2 == 0:
+                    len_l_pad = len_r_pad = int(len_diff / 2)
+                else:
+                    len_r_pad = int((len_diff-1/2))
+                    len_l_pad = len_r_pad + 1
+
+        padded_char = (padding_char*len_l_pad)+printed_char+(padding_char*len_r_pad)
+
+        return get_ansi_colored_text(padded_char,
+                                     self.__fg_color_rgb,
+                                     self.color.rgb)
+
 
 
 class CubeLayer:

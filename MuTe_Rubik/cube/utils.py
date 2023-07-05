@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 
 
@@ -13,6 +15,6 @@ def rotate_matrix_anticlockwise(matrix: np.ndarray):
     return matrix.T[::-1]
 
 
-def flatten_cube_data_list(data):
+def get_id_vector_from_cube_data(data: List[List]):
 
-      return [cell for face in data for cell in face]
+      return [cell.color.color_id for face in data for cell in face]

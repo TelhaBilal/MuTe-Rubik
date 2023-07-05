@@ -11,7 +11,7 @@ class GameColor:
 
         assert len(rgb) == 3, "Length of RGB param must be 3: for red blue and green colors"
 
-        self.id = color_id
+        self.color_id = color_id
         self.rgb = rgb
 
 
@@ -20,11 +20,12 @@ class ColorOptions(Enum):
     RED = GameColor(1, (255, 0, 0))
     ORANGE = GameColor(2, (255, 165, 0))
 
-    BLUE = GameColor(3, (0, 0, 255))
-    GREEN = GameColor(4, (0, 255, 0))
+    WHITE = GameColor(3, (255, 255, 255))
+    YELLOW = GameColor(4, (255, 255, 0))
 
-    WHITE = GameColor(5, (255, 255, 255))
-    YELLOW = GameColor(6, (255, 255, 0))
+    BLUE = GameColor(5, (0, 0, 255))
+    GREEN = GameColor(6, (0, 255, 0))
+
 
     BLACK = GameColor(0, (0, 0, 0))
 

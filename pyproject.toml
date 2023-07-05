@@ -3,7 +3,7 @@ requires = ["hatchling>=1.10.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "MuTe_RL"
+name = "MuTe_Rubik"
 version = "0.0.1"
 readme = "README.md"
 description = "Deep learning models and environments made by Telha and Mudassar"

@@ -1,4 +1,3 @@
-import enum
 import random
 import re
 from copy import deepcopy
@@ -8,10 +7,10 @@ from typing import Dict, List, Iterable
 import numpy as np
 
 # from bin.color import BackgroundColors, Colors
-from MuTe_Rubik.cube.layer import CubeLayer, get_cube_layers_from_data
-from MuTe_Rubik.base.rubik import RubikPuzzle, ColorOptions, GameColor
+from MuTe_Rubik.cube.layer import CubeLayer, CubeCell, CubeFaceIndexes, get_cube_layers_from_data
+from MuTe_Rubik.base.rubik import RubikPuzzle, ColorOptions
 
-from MuTe_Rubik.cube.utils import flatten_data_list
+from MuTe_Rubik.cube.utils import get_id_vector_from_cube_data
 
 
 class Cube(RubikPuzzle):
@@ -19,44 +18,42 @@ class Cube(RubikPuzzle):
         self,
         data: List[List] | None = None,
         sides_length: int | None = None,
-        numbered=True,
         disabled_layers: Iterable[int] | None = None,
         # :TODO: n_axis: int = 3 # x,y,z for cube, # 6 for dodecahedron?? 2 for pyramid??
     ) -> None:
 
         assert data or sides_length, "provide either 'sides_length' or 'data'"
 
-        self.numbered = numbered
         self.disabled_layers = disabled_layers
 
-        self.data = data if data else self._solved_state(sides_length, numbered=numbered)
-        sides_length = sqrt(len(self.data[0]))
+        # self.data = data if data else self._solved_state(sides_length, numbered=numbered)
+        self.solved_backup = self.__get_solved_state(sides_length)
+        init_data = data if data else deepcopy(self.solved_backup)
 
-        assert sides_length == int(sides_length), "provide a cube with square faces"
-
-        self.n = int(sides_length)
-
-        self.layers: Dict[str, CubeLayer] = get_cube_layers_from_data(data, sides_length)
+        self.__init_from_data(init_data)
 
         self.moves_stack: List[str] = []
         self.disabled_layers = disabled_layers
         self._disable_layers(disabled_layers)
-        self.solved_backup = (
-            deepcopy(self.data)
-            if data is None
-            else self._solved_state(self.n, numbered=self.numbered)
-        )
+
         self.possible_moves = self.get_all_possible_moves()
 
+    def __init_from_data(self, init_data):
+
+        self.data = init_data
+
+        sides_length = sqrt(len(self.data[0]))
+        assert sides_length == int(sides_length), "provide a cube with square faces"
+
+        self.n = int(sides_length)
+        self.layers: Dict[str, CubeLayer] = get_cube_layers_from_data(self.data, self.n)
 
     def get_all_possible_moves(self):
         return [item for key in self.layers.keys() for item in [key, key + "'"]]
 
-
     # TODO: alias of make_move function for continuity purpose. delete after fixing uses
     def move(self, *args, **kwargs):
         return self.make_move(*args, **kwargs)
-
 
     def make_move(self, move_id: str):
         # parse input
@@ -87,7 +84,7 @@ class Cube(RubikPuzzle):
 
         return self
 
-    def shuffle(self, verbose=False):
+    def shuffle(self, verbose: bool = False):
         for _ in range(random.randint(1, 50 * self.n**2)):
             move_id = random.choice(self.possible_moves)
             if verbose:
@@ -98,12 +95,12 @@ class Cube(RubikPuzzle):
 
     def is_solved(self) -> bool:
         # :TODO: Allow if cube is a rotated version of the solved state
-        return self.to_vector() == Cube.data_to_vector(self.solved_backup)
+        return self.to_vector() == get_id_vector_from_cube_data(self.solved_backup)
 
     def fraction_solved(self) -> float:
         # :TODO: Allow if cube is a rotated version of the solved state
         current_vector = np.array(self.to_vector())
-        solved_vector = np.array(Cube.data_to_vector(self.solved_backup))
+        solved_vector = np.array(get_id_vector_from_cube_data(self.solved_backup))
 
         valid_mask = solved_vector != 0
 
@@ -114,7 +111,7 @@ class Cube(RubikPuzzle):
 
     def to_vector(self) -> List[int]:
         # vector = Cube.data_to_vector(self.data)
-        return flatten_data_list(self.data)
+        return get_id_vector_from_cube_data(self.data)
 
     def _grow_to_size(self, data: List[List], size: int):
         data = deepcopy(data)
@@ -140,7 +137,7 @@ class Cube(RubikPuzzle):
         # for i in range(len(self.data)):
         #     self.data[i] = solved_data[i]
 
-        self.data = deepcopy(self.solved_data)
+        self.__init_from_data(deepcopy(self.solved_backup))
 
         # TODO: reset history?
         # self.moves_stack = []
@@ -160,13 +157,19 @@ class Cube(RubikPuzzle):
     #         ]
     #     return [[clr.value for i in range(n_layers**2)] for clr in list(Colors)[:6]]
 
-    @staticmethod
-    def get_solved(n_sides):
+    @classmethod
+    def get_solved_cube(cls, n_sides):
 
-        data = [[CubeCell(clr, i+1) for i in range(n_sides**2)] for clr in list(ColorOptions)]
+        data = cls.__get_solved_state(n_sides)
         return Cube(data)
 
+    @staticmethod
+    def __get_solved_state(n_sides):
+
+        return [[CubeCell(clr.value, i+1) for i in range(n_sides**2)] for clr in list(ColorOptions)]
+
     def _disable_layers(self, layer_ids: Iterable[str] | None):
+
         if not layer_ids:
             return
 
@@ -174,20 +177,17 @@ class Cube(RubikPuzzle):
             if layer_id in self.layers:
                 for face_index, tile_indexes in self.layers[layer_id].sides_indexes:
                     for ti in tile_indexes:
-                        self.data[face_index][ti] = (
-                            BackgroundColors.BLACK.value.with_content(
-                                f"{ti}", width=max(2, len(str(self.n**2 - 1)))
-                            )
-                            if self.numbered
-                            else Colors.BLACK.value
-                        )
+                        # self.data[face_index][ti] = (
+                        #     BackgroundColors.BLACK.value.with_content(
+                        #         f"{ti}", width=max(2, len(str(self.n**2 - 1)))
+                        #     )
+                        #     if self.numbered
+                        #     else Colors.BLACK.value
+                        # )
+                        self.data[face_index][ti] = CubeCell(ColorOptions.BLACK.value, ti)
                 if self.layers[layer_id].face_index is not None:
                     self.data[self.layers[layer_id].face_index] = [
-                        BackgroundColors.BLACK.value.with_content(
-                            f"{i}", width=max(2, len(str(self.n**2 - 1)))
-                        )
-                        if self.numbered
-                        else Colors.BLACK.value
+                        CubeCell(ColorOptions.BLACK.value, i)
                         for i in range(self.n**2)
                     ]
                 self.layers.pop(layer_id)
@@ -198,33 +198,39 @@ class Cube(RubikPuzzle):
         # 2, 3 = top, down
         # 4, 5 = left, right
 
-        def make_matrix(face, n):
+        max_char_length = len(str(self.n**2))
+
+        def make_matrix(face: List[List[CubeCell]], n):
             face = np.array(face).reshape(n, n)
-            return [" ".join([item.str for item in line]) for line in face]
+            return [" ".join([item.get_padded_str(total_width=max_char_length) for item in line]) for line in face]
 
         lines = []
         lines.extend(
             [
                 " " * (len(re.sub("\033[^m]*m", "", line)) + 1) + line
-                for line in make_matrix(self.data[FaceIndexes.TOP.value], self.n)
+                for line in make_matrix(self.data[CubeFaceIndexes.TOP.value], self.n)
             ]
         )
         lines.extend(
             [
                 " ".join(lines)
                 for lines in zip(
-                    make_matrix(self.data[FaceIndexes.LEFT.value], self.n),
-                    make_matrix(self.data[FaceIndexes.FRONT.value], self.n),
-                    make_matrix(self.data[FaceIndexes.RIGHT.value], self.n),
-                    make_matrix(self.data[FaceIndexes.BACK.value], self.n),
+                    make_matrix(self.data[CubeFaceIndexes.LEFT.value], self.n),
+                    make_matrix(self.data[CubeFaceIndexes.FRONT.value], self.n),
+                    make_matrix(self.data[CubeFaceIndexes.RIGHT.value], self.n),
+                    make_matrix(self.data[CubeFaceIndexes.BACK.value], self.n),
                 )
             ]
         )
         lines.extend(
             [
                 " " * (len(re.sub("\033[^m]*m", "", line)) + 1) + line
-                for line in make_matrix(self.data[FaceIndexes.DOWN.value], self.n)
+                for line in make_matrix(self.data[CubeFaceIndexes.DOWN.value], self.n)
             ]
         )
 
         return "\n".join(lines) + "\n"
+
+    def __deepcopy__(self):
+
+        return Cube(data=deepcopy(self.data))
